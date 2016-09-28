@@ -1,3 +1,25 @@
+<?php 
+
+session_start();
+require('dbconnect.php');
+
+if(empty($_REQUEST['tweet_id'])){
+//tweet_idがパラメータになかったらindex.phpへ遷移
+  header('Location: index.php');
+  exit();
+}
+
+//投稿を取得する
+  $sql=sprintf('SELECT m.`nick_name` ,m. `picture_path`, t.* FROM `tweets` t, `members` m WHERE m. `member_id`=t. `member_id` AND t.`tweet_id`=%d ORDER BY t. `created` DESC',
+mysqli_real_escape_string($db, $_REQUEST['tweet_id'])
+    );
+  $tweets=mysqli_query($db, $sql) or die(mysqli_error($db));
+
+
+ ?>
+
+
+
 <!DOCTYPE html>
 <html lang="ja">
   <head>
@@ -8,14 +30,11 @@
     <title>SeedSNS</title>
 
     <!-- Bootstrap -->
-    <link href="../assets/css/bootstrap.css" rel="stylesheet">
-    <link href="../assets/font-awesome/css/font-awesome.css" rel="stylesheet">
-    <link href="../assets/css/form.css" rel="stylesheet">
-    <link href="../assets/css/timeline.css" rel="stylesheet">
-    <link href="../assets/css/main.css" rel="stylesheet">
-    <!--
-      designフォルダ内では2つパスの位置を戻ってからcssにアクセスしていることに注意！
-     -->
+    <link href="assets/css/bootstrap.css" rel="stylesheet">
+    <link href="assets/font-awesome/css/font-awesome.css" rel="stylesheet">
+    <link href="assets/css/form.css" rel="stylesheet">
+    <link href="assets/css/timeline.css" rel="stylesheet">
+    <link href="assets/css/main.css" rel="stylesheet">
 
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
@@ -41,21 +60,32 @@
           <!-- Collect the nav links, forms, and other content for toggling -->
           <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
               <ul class="nav navbar-nav navbar-right">
+                <li><a href="logout.html">ログアウト</a></li>
               </ul>
           </div>
           <!-- /.navbar-collapse -->
       </div>
       <!-- /.container-fluid -->
   </nav>
-
-  <div class="container">
-    <div class="row">
-      <div class="col-md-4 col-md-offset-4 content-margin-top">
-        <div class="well">
-          ご登録ありがとうございます。 <br>
-          下記ボタンよりログインして下さい。
+          <?php if($tweet=mysqli_fetch_assoc($tweets)): ?>
+        <div class="msg">
+          <img src="member_picture/<?php echo htmlspecialchars($tweet['picture_path'], ENT_QUOTES, 'UTF-8');?>" width="100" height="100">
+          <p>投稿者 : <span class="name"> <?php echo htmlspecialchars($tweet['nick_name'], ENT_QUOTES, 'UTF-8'); ?></span></p>
+          <p>
+            つぶやき : <br>
+            <?php echo htmlspecialchars($tweet['tweet'], ENT_QUOTES, 'UTF-8'); ?>
+          </p>
+          <p class="day">
+            <?php echo htmlspecialchars($tweet['created'], ENT_QUOTES, 'UTF-8'); ?>
+            <?php if($_SESSION['id'] == $tweet['member_id']): ?>
+            [<a href="delete.php?tweet_id=<?php echo $tweet['tweet_id']; ?>" style="color: #F33;">削除</a>]
+          <?php endif; ?>
+          </p>
         </div>
-        <a href="../login.php" class="btn btn-default">ログイン</a>
+      <?php else: ?>
+      <p>その投稿は削除されたか、URLが間違っています。</p>
+      <?php endif; ?>
+        <a href="index.php">&laquo;&nbsp;一覧へ戻る</a>
       </div>
     </div>
   </div>
@@ -65,4 +95,3 @@
     <script src="js/bootstrap.min.js"></script>
   </body>
 </html>
-
